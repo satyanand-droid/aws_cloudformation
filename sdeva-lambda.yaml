@@ -1,0 +1,35 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Demo Lambda function with cloudformation.
+Resources:
+  awslambdacloudformation:
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: python3.9
+      Handler: index.handler
+      Role:
+        Fn::GetAtt:
+          - LambdaRole
+          - Arn
+      Code:
+        ZipFile: |
+          print(event)
+      Description: Invoke a function during stack creation.
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName:
+        Fn::Sub: lambda-role
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action:
+            - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+              - lambda.amazonaws.com
+        Version: 2012-10-17
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AWSLambdaExecute
+      Path: /
+
+      
