@@ -1,0 +1,12 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Resources:
+  MySNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: "SampleTopic"
+  MyQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: "samplequeue"
+ 
+  
