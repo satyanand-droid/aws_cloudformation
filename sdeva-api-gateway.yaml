@@ -1,0 +1,56 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Resources :
+    RestApi :
+        Type : AWS::ApiGateway::RestApi
+        Properties :
+            Body :
+                openapi: 3.0.3
+                info:
+                  title: Employee portal
+                  description: |- 
+                   Employee API 
+                  version: 1.0.11
+                tags:
+                  - name: employee
+                    description: Everything about your employee
+                paths:
+                  /employee/{employeeId}:
+                    get:
+                      tags:
+                        - employee
+                      summary: Find pet by ID
+                      description: Returns a employee pet
+                      operationId: getEmployeeById
+                      parameters:
+                       - name: employeeId
+                         in: path
+                         description: ID of employee to return
+                         required: true
+                         schema:
+                          type: string
+                      responses:
+                        '200':
+                          description: successful operation
+                        '400':
+                          description: Invalid ID supplied
+                        '404':
+                          description: employee not found
+                    delete:
+                      tags:
+                        - employee
+                      summary: Deletes a employee
+                      description: delete a employee
+                      operationId: deleteEmployee
+                      parameters:
+                        - name: employeeId
+                          in: path
+                          description: employee id to delete
+                          required: true
+                          schema:
+                            type: string
+                      responses:
+                        '400':
+                          description: Invalid employee value
+            Name : myApi
+            Parameters:
+              endpointConfigurationTypes: REGIONAL 
