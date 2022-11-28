@@ -1,56 +1,111 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Resources :
-    RestApi :
-        Type : AWS::ApiGateway::RestApi
-        Properties :
-            Body :
-                openapi: 3.0.3
-                info:
-                  title: Employee portal
-                  description: |- 
-                   Employee API 
-                  version: 1.0.11
-                tags:
-                  - name: employee
-                    description: Everything about your employee
-                paths:
-                  /employee/{employeeId}:
-                    get:
-                      tags:
-                        - employee
-                      summary: Find pet by ID
-                      description: Returns a employee pet
-                      operationId: getEmployeeById
-                      parameters:
-                       - name: employeeId
-                         in: path
-                         description: ID of employee to return
-                         required: true
-                         schema:
-                          type: string
-                      responses:
-                        '200':
-                          description: successful operation
-                        '400':
-                          description: Invalid ID supplied
-                        '404':
-                          description: employee not found
-                    delete:
-                      tags:
-                        - employee
-                      summary: Deletes a employee
-                      description: delete a employee
-                      operationId: deleteEmployee
-                      parameters:
-                        - name: employeeId
-                          in: path
-                          description: employee id to delete
-                          required: true
-                          schema:
-                            type: string
-                      responses:
-                        '400':
-                          description: Invalid employee value
-            Name : myApi
-            Parameters:
-              endpointConfigurationTypes: REGIONAL 
+
+Description: AWS API Gateway with a Lambda Integration
+
+Parameters:
+  lambdaFunctionName:
+    Type: "String"
+    Description: Lambda function name. (Recommend to keep default)
+    Default: "lambda-api"
+  apiStageName:
+    Type: "String"
+    Description: API Staging Name. (Recommend to keep default)
+    Default: "v1"
+  apiResourcePath:
+    Type: "String"
+    Description: Resource Path for API.
+    Default: "employee"
+
+Resources:
+
+  ApiGatewayRestApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Description: An API Gateway for Lambda APIs
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+      Name: lambda-api-gateway-integretion
+
+  ProxyResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      RestApiId: !Ref ApiGatewayRestApi
+      ParentId: !GetAtt ApiGatewayRestApi.RootResourceId
+      PathPart: !Ref apiResourcePath
+
+  ProxyResourceANY:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      RestApiId: !Ref ApiGatewayRestApi
+      ResourceId: !Ref ProxyResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      OperationName: !Ref apiResourcePath
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:566066428641:function:sdeva-awslambdacloudformation-dwwckMoA1tiR/invocations'
+
+  ProxyResourcePOST:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      RestApiId: !Ref ApiGatewayRestApi
+      ResourceId: !Ref ProxyResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      OperationName: !Ref apiResourcePath
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:566066428641:function:sdeva-awslambdacloudformationPOST-48lj2DyAsg8s/invocations'
+
+  ApiGatewayModel:
+    Type: AWS::ApiGateway::Model
+    Properties:
+      ContentType: 'application/json'
+      RestApiId: !Ref ApiGatewayRestApi
+      Schema: {}
+
+  ApiGatewayStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      DeploymentId: !Ref ApiGatewayDeployment
+      Description: Lambda API Stage v1
+      RestApiId: !Ref ApiGatewayRestApi
+      StageName: !Ref "apiStageName"
+
+  ApiGatewayDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: ProxyResourceANY
+    Properties:
+      Description: Lambda API Deployment
+      RestApiId: !Ref ApiGatewayRestApi
+
+  ApiGatewayIamRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: ''
+            Effect: 'Allow'
+            Principal:
+              Service:
+                - 'apigateway.amazonaws.com'
+            Action:
+              - 'sts:AssumeRole'
+      Path: '/'
+      Policies:
+        - PolicyName: LambdaAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action: 'lambda:*'
+                Resource: arn:aws:lambda:us-east-1:566066428641:function:*
+  
+  
+
+  
+      
