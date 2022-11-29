@@ -8,5 +8,11 @@ Resources:
     Type: AWS::SQS::Queue
     Properties:
       QueueName: "samplequeue"
+  MySubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint: juhi.tripathi@watchguard.com
+      Protocol: email
+      TopicArn: !Ref 'MySNSTopic'
  
   
